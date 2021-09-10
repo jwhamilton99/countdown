@@ -1,0 +1,132 @@
+<html>
+	<head>
+		<title>Create Countdown</title>
+		<style>
+			body {
+				margin:0;
+				--background-color: #323232;
+				--primary-color: #fffff7;
+				
+				background-color:var(--primary-color);
+				font-family: Arial, helvetica, sans-serif;
+			}
+			
+			#container {
+				height:100%;
+				width:100%;
+				display:flex;
+				flex-direction:column;
+				justify-content:center;
+				align-items:center;
+				text-align:center;
+				position:absolute;
+				z-index:10;
+				
+				font-size: max(min(2vw,2em), 1.5em);
+				
+			}
+			
+			#confettiOverlay {
+				position:absolute;
+				width:100%;
+				height:100%;
+				z-index:5;
+			}
+			
+			.content {
+				padding:20px;
+				border:1px solid black;
+				border-radius:20px;
+				box-shadow:0px 0px 10px rgba(0,0,0,0.5);
+				margin:20px;
+				
+				background-color:var(--background-color);
+				color: var(--primary-color);
+			}
+			
+			@media (prefers-color-scheme:dark) {
+				body {
+					background-color:var(--background-color);
+				}
+				.content {
+					background-color:var(--primary-color);
+					color:var(--background-color);
+				}
+			}
+			
+			@media screen and (orientation:portrait) {
+				#container {
+					font-size: max(min(6vw,6em), 3em);
+				}
+			}
+		</style>
+		<script>
+			function createCountdown() {
+				var name = document.getElementById("countdownNameInput").value;
+				var date = document.getElementById("countdownDateInput").value;
+				var dateTime = document.getElementById("countdownDateTimeInput").value;
+				
+				console.log(date);
+				console.log(dateTime);
+				
+				var d = new Date(date+"T"+dateTime+":00Z");
+				d.setMinutes(d.getTimezoneOffset());
+				
+				var end = document.getElementById("countdownEndInput").value;
+				var endTime = document.getElementById("countdownEndTimeInput").value;
+				var threshold = document.getElementById("confettiThresholdInput").value;
+				
+				if(name == "") { alert("Please enter a name."); return; }
+				if(date == "") { alert("Please enter a start date."); return; }
+				if(dateTime == "") { alert("Please enter a start time."); return; }
+				
+				let nameString = "name="+encodeURIComponent(name);
+				let dateString = "&date="+encodeURIComponent(d.toISOString());
+				
+				var endString = ""
+				
+				if(end != "") {
+					if(endTime != "") {
+						var ed = new Date(end+"T"+endTime+":00Z");
+						ed.setMinutes(ed.getTimezoneOffset());
+						endString = "&end="+encodeURIComponent(ed.toISOString());
+					} else {
+						alert("Please enter an end time.");
+					}
+				}
+				
+				var thresholdString = ""
+				
+				if(threshold != "") {
+					thresholdString = "&threshold="+encodeURIComponent(threshold);
+				}
+				
+				let string = nameString+dateString+endString+thresholdString;
+				console.log(string);
+				window.location = "/?"+string;
+			}
+		</script>
+	</head>
+	<body>
+		<div id="container">
+			<div class="content" id="creationWindow">
+				<label for="countdownNameInput">Name</label><br>
+				<input type="text" id="countdownNameInput" name="countdownNameInput" placeholder="Enter Name"><br>
+				<label for="countdownDateInput">Event Start</label><br>
+				<input type="date" id="countdownDateInput" name="countdownDateInput">
+				<input type="time" id="countdownDateTimeInput" name="countdownDateTimeInput"><br>
+				<label for="countdownEndInput">Event End (Optional)</label><br>
+				<input type="date" id="countdownEndInput" name="countdownEndInput">
+				<input type="time" id="countdownEndTimeInput" name="countdownEndTimeInput"><br>
+				<label for="confettiThresholdInputInput">Confetti Threshold</label><br>
+				<select name="confettiThresholdInput" id="confettiThresholdInput" value=0>
+					<option value=0>None</option>
+					<option value=1>Day</option>
+					<option value=2>Hour</option>
+					<option value=3>Minute</option>
+				</select><br>
+				<button onclick="createCountdown()">Create</button>
+			</div>
+		</div>
+	</body>
+</html>

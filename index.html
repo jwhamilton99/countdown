@@ -1,0 +1,285 @@
+<html>
+	<head>
+		<title>Countdown</title>
+		<style>
+			body {
+				margin:0;
+				--background-color: #323232;
+				--primary-color: #fffff7;
+				
+				background-color:var(--primary-color);
+				font-family: Arial, helvetica, sans-serif;
+			}
+			
+			#container {
+				height:100%;
+				width:100%;
+				display:flex;
+				flex-direction:column;
+				justify-content:center;
+				align-items:center;
+				text-align:center;
+				position:absolute;
+				z-index:10;
+				
+				font-size: max(min(3vw,3em), 1.5em);
+				
+			}
+			
+			#confettiOverlay {
+				position:absolute;
+				width:100%;
+				height:100%;
+				z-index:5;
+			}
+			
+			#creationWindow {
+				display:none;
+			}
+			
+			.content {
+				padding:20px;
+				border:1px solid black;
+				border-radius:20px;
+				box-shadow:0px 0px 10px rgba(0,0,0,0.5);
+				margin:20px;
+				
+				background-color:var(--background-color);
+				color: var(--primary-color);
+			}
+			
+			@media (prefers-color-scheme:dark) {
+				body {
+					background-color:var(--background-color);
+				}
+				.content {
+					background-color:var(--primary-color);
+					color:var(--background-color);
+				}
+			}
+			
+			@media screen and (orientation:portrait) {
+				#container {
+					font-size: max(min(6vw,6em), 3em);
+				}
+			}
+		</style>
+		<script>		
+			var countdownDate;
+			var countdownEndDate;
+			
+			var countdownName;
+			
+			//0 = none; 1 = day; 2 = hour; 3 = minute;
+			var confettiThreshold;
+			
+			function loaded() {
+				var args = new URLSearchParams(window.location.search);
+				
+				let name = args.get("name");
+				let date = args.get("date");
+				let end = args.get("end");
+				let threshold = args.get("threshold");
+				
+				if(name == null && date == null) {
+					window.location = ("/create")
+					return;
+				}
+				
+				loadData(name, date, end, threshold);
+				
+				document.getElementById("countdownName").innerHTML = countdownName;
+				checkDate();
+				setTimeout(function() {
+					timerTick();
+				}, 1000);
+			}
+			
+			function loadData(name, date, end, threshold) {
+				document.title = name;
+				
+				countdownName = name;
+				countdownDate = new Date(date);
+				
+				if(end != null) {
+					countdownEndDate = new Date(end);
+				}
+				
+				if(threshold != null) {
+					confettiThreshold = threshold;
+				} else {
+					confettiThreshold = 0;
+				}
+			}
+			
+			
+			
+			function timerTick() {
+				checkDate();
+				setTimeout(function() {
+					timerTick();
+				}, 1000);
+			}
+			
+			function getTimeString(date) {
+				var ampm = "AM";
+				var hour = date.getHours();
+				if(hour > 12) {
+					hour-=12;
+					ampm = "PM";
+				}
+				if(hour == 12) {
+					ampm = "PM";
+				}
+				var minute = date.getMinutes();
+				var second = date.getSeconds();
+				if(minute != 0) {
+					return (hour+":"+((minute < 10) ? "0" : "")+minute+" "+ampm);
+				}
+				
+				if(second != 0) {
+					return (hour+":00"+second+" "+ampm);
+				}
+				
+				return (hour+" "+ampm);
+			}
+			
+			function getDateString(date) {
+				var month = date.getMonth()+1;
+				var day = date.getDate();
+				
+				var ampm = "AM";
+				var hour = date.getHours();
+				if(hour > 12) {
+					hour-=12;
+					ampm = "PM";
+				}
+				if(hour == 12) {
+					ampm = "PM";
+				}
+				var minute = date.getMinutes();
+				var second = date.getSeconds();
+				if(minute != 0) {
+					if(second == 0) {
+						return (month+"/"+day+" at "+hour+":"+((minute < 10) ? "0" : "")+minute+" "+ampm);
+					} else {
+						return (month+"/"+day+" at "+hour+":"+((minute < 10) ? "0" : "")+minute+":"+((second<10) ? "0" : "")+second+" "+ampm);
+					}
+				}
+				
+				if(second != 0) {
+					return (hour+":00:"+((second<10) ? "0" : "")+second+" "+ampm);
+				}
+				
+				return (month+"/"+day+" at "+hour+" "+ampm);
+			}
+			
+			function checkDate() {
+				var d = new Date();
+				
+				if(d.getFullYear() == countdownDate.getFullYear() && d.getMonth() == countdownDate.getMonth() && d.getDate() == countdownDate.getDate()) {
+					var showConfetti = true;
+					switch(confettiThreshold) {
+						case 0:
+							showConfetti = false;
+							break;
+						case 2:
+							if(d.getHours() != countdownDate.getHours()) {
+								showConfetti = false;
+							}
+							break;
+						case 3:
+							if(d.getHours() != countdownDate.getHours()) {
+								showConfetti = false;
+							}
+							break;
+					}
+					
+					if(d > ((countdownEndDate != undefined) ? countdownEndDate : countdownDate)) {
+						showConfetti = false
+					}
+					
+					if(showConfetti) {
+						document.getElementById("confettiOverlay").style.backgroundImage = "url(confetti.gif)";
+					}
+				}
+				if(d < countdownDate) {
+					var diff = countdownDate-d;
+					
+					var days = Math.floor(diff/(24*60*60*1000));
+					diff-=days*24*60*60*1000;
+					var hours = Math.floor(diff/(60*60*1000));
+					diff-=hours*60*60*1000;
+					var minutes = Math.floor(diff/(60*1000));
+					diff-=minutes*60*1000;
+					var seconds = Math.floor(diff/1000);
+					
+					var daySuffix = "s";
+					if(days == 1) { daySuffix = ""; }
+					var hourSuffix = "s";
+					if(hours == 1) { hourSuffix = ""; }
+					var minSuffix = "s";
+					if(minutes == 1) { minSuffix = ""; }
+					var secSuffix = "s";
+					if(seconds == 1) { secSuffix = ""; }
+					
+					document.getElementById("countdownTimeLeft").innerHTML = "The "+countdownName+" is on "+getDateString(countdownDate)+" local time,<br>or in "+((days != 0) ? days+" day"+daySuffix+", " : "")+((hours != 0) ? hours+" hour"+hourSuffix+", " : "")+((minutes != 0) ? minutes+" minute"+minSuffix+", " : "")+seconds+" second"+secSuffix+".";
+				} else {
+					var pastDate = ((countdownEndDate != undefined) ? countdownEndDate : countdownDate);
+					if(d < pastDate) {
+						var diff = pastDate-d;
+						
+						var days = Math.floor(diff/(24*60*60*1000));
+						diff-=days*24*60*60*1000;
+						var hours = Math.floor(diff/(60*60*1000));
+						diff-=hours*60*60*1000;
+						var minutes = Math.floor(diff/(60*1000));
+						diff-=minutes*60*1000;
+						var seconds = Math.floor(diff/1000);
+						
+						var daySuffix = "s";
+						if(days == 1) { daySuffix = ""; }
+						var hourSuffix = "s";
+						if(hours == 1) { hourSuffix = ""; }
+						var minSuffix = "s";
+						if(minutes == 1) { minSuffix = ""; }
+						var secSuffix = "s";
+						if(seconds == 1) { secSuffix = ""; }
+						
+						document.getElementById("countdownTimeLeft").innerHTML = "The "+countdownName+" started at "+getTimeString(pastDate)+" local time,<br>and will probably end in "+((days != 0) ? days+" day"+daySuffix+", " : "")+((hours != 0) ? hours+" hour"+hourSuffix+", " : "")+((minutes != 0) ? minutes+" minute"+minSuffix+", " : "")+seconds+" second"+secSuffix+".";
+					} else {
+						var diff = d-pastDate;
+						
+						var days = Math.floor(diff/(24*60*60*1000));
+						diff-=days*24*60*60*1000;
+						var hours = Math.floor(diff/(60*60*1000));
+						diff-=hours*60*60*1000;
+						var minutes = Math.floor(diff/(60*1000));
+						diff-=minutes*60*1000;
+						var seconds = Math.floor(diff/1000);
+						
+						var daySuffix = "s";
+						if(days == 1) { daySuffix = ""; }
+						var hourSuffix = "s";
+						if(hours == 1) { hourSuffix = ""; }
+						var minSuffix = "s";
+						if(minutes == 1) { minSuffix = ""; }
+						var secSuffix = "s";
+						if(seconds == 1) { secSuffix = ""; }
+						
+						document.getElementById("countdownTimeLeft").innerHTML = "The "+countdownName+" ended on "+getDateString(pastDate)+",<br> or "+((days != 0) ? days+" day"+daySuffix+", " : "")+((hours != 0) ? hours+" hour"+hourSuffix+", " : "")+((minutes != 0) ? minutes+" minute"+minSuffix+", " : "")+seconds+" second"+secSuffix+" ago.";
+					}
+				}
+			}
+		</script>
+	</head>
+	<body onload="loaded()">
+		<div id="confettiOverlay"> </div>
+		<div id="container">
+			<div class="content" id="countdownWindow">
+				<h1 id="countdownName">Countdown Name</h1>
+				<p id="countdownTimeLeft">The countdown is in xx days, xx hours, xx minutes, xx seconds.</p>
+			</div>
+		</div>
+	</body>
+</html>
